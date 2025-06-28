@@ -29,7 +29,10 @@ SECRET_KEY = 'django-insecure-n!3hk(drzf+8cdqxb_yxu$lq7a2-eets)vpg0gctx-2(892x&t
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'talentlink-nloa.onrender.com',
+    'localhost'
+]
 
 
 
