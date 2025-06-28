@@ -38,7 +38,8 @@ ALLOWED_HOSTS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  
 ]
-
+    
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True  # Required for sessions/cookies
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']  # Expose custom headers
 
