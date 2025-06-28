@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'users',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -168,5 +170,5 @@ SOCIALACCOUNT_PROVIDERS = {
 SOCIALACCOUNT_LOGIN_ON_GET=True
 ACCOUNT_LOGOUT_ON_GET=True
 
-LOGIN_REDIRECT_URL = 'http://localhost:5173/'
+LOGIN_REDIRECT_URL = 'http://localhost:5173/onboarding'
 LOGOUT_REDIRECT_URL = 'http://localhost:5173/'
