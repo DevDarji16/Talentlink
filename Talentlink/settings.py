@@ -35,6 +35,14 @@ ALLOWED_HOSTS = [
 ]
 
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  
+]
+
+CORS_ALLOW_CREDENTIALS = True  # Required for sessions/cookies
+CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']  # Expose custom headers
+
+
 
 # Application definition
 
@@ -52,6 +60,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'users',
     'rest_framework',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -64,6 +73,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'Talentlink.urls'
