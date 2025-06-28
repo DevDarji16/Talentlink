@@ -9,4 +9,4 @@ from rest_framework.response import Response
 def signup_redirect(request):
     role=request.data.get('role')
     request.session['role']=role
-    return Response({'url':'https://talentlink-nloa.onrender.com/authentication/accounts/google/login/'})
+    return Response({'url':'https://talentlink-nloa.onrender.com/auth/accounts/google/login/'})
