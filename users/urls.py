@@ -1,6 +1,8 @@
 from django.urls import path
-from .views import signup_redirect
+from .views import check_user
 
 urlpatterns=[
-    path('signup_redirect/',signup_redirect)
+
+    path('check_user/',check_user),#not used
+
 ]

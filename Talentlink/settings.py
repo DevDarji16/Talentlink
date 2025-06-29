@@ -31,14 +31,15 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'talentlink-nloa.onrender.com',
-    'localhost'
+    'localhost',
+    '127.0.0.1'
 ]
 
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  
 ]
-    
+
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True  # Required for sessions/cookies
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']  # Expose custom headers
@@ -180,6 +181,12 @@ SOCIALACCOUNT_PROVIDERS = {
 
 SOCIALACCOUNT_LOGIN_ON_GET=True
 ACCOUNT_LOGOUT_ON_GET=True
+
+SESSION_COOKIE_SAMESITE = 'Lax'  # 'None' only if both are HTTPS
+SESSION_COOKIE_SECURE = False   # True if using HTTPS in production
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = False
+
 
 LOGIN_REDIRECT_URL = 'http://localhost:5173/onboarding'
 LOGOUT_REDIRECT_URL = 'http://localhost:5173/'
