@@ -179,8 +179,8 @@ SOCIALACCOUNT_PROVIDERS = {
 SOCIALACCOUNT_LOGIN_ON_GET=True
 ACCOUNT_LOGOUT_ON_GET=True
 
-SESSION_COOKIE_SAMESITE = 'Lax'  # 'None' only if both are HTTPS
-SESSION_COOKIE_SECURE = False   # True if using HTTPS in production
+SESSION_COOKIE_SAMESITE = 'None'  # 'None' only if both are HTTPS
+SESSION_COOKIE_SECURE = True   # True if using HTTPS in production
 
 
 
