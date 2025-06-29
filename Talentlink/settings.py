@@ -35,12 +35,9 @@ ALLOWED_HOSTS = [
     '127.0.0.1'
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  
-]
 
-CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True  # Required for sessions/cookies
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']  # Expose custom headers
 
@@ -66,6 +63,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -75,7 +73,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'Talentlink.urls'
@@ -184,8 +181,7 @@ ACCOUNT_LOGOUT_ON_GET=True
 
 SESSION_COOKIE_SAMESITE = 'Lax'  # 'None' only if both are HTTPS
 SESSION_COOKIE_SECURE = False   # True if using HTTPS in production
-CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SECURE = False
+
 
 
 LOGIN_REDIRECT_URL = 'http://localhost:5173/onboarding'
