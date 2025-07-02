@@ -35,8 +35,14 @@ ALLOWED_HOSTS = [
     '127.0.0.1'
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True 
+# CORS_ALLOW_ALL_ORIGINS = True 
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+]
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
 
 CORS_ALLOW_CREDENTIALS = True  # Required for sessions/cookies
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']  # Expose custom headers
@@ -179,9 +185,8 @@ SOCIALACCOUNT_PROVIDERS = {
 SOCIALACCOUNT_LOGIN_ON_GET=True
 ACCOUNT_LOGOUT_ON_GET=True
 
-SESSION_COOKIE_SAMESITE = 'None'  # 'None' only if both are HTTPS
-SESSION_COOKIE_SECURE = True   # True if using HTTPS in production
-
+SESSION_COOKIE_SAMESITE = 'None'  
+SESSION_COOKIE_SECURE = True   
 
 
 LOGIN_REDIRECT_URL = 'http://localhost:5173/onboarding'
