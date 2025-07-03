@@ -53,3 +53,39 @@ def check_login(request):
     return Response({
         'authenticated':False
     })
+
+
+@api_view(['GET', 'POST'])
+def gigs_view(request):
+    if request.method == 'GET':
+        gigs = Gig.objects.all()
+        serializer = GigSerializer(gigs, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        data = request.data.copy()
+        data['freelancer'] = request.user.profile.id
+        serializer = GigSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
+
+
+
+
+@api_view(['GET', 'POST'])
+def jobs_view(request):
+    if request.method == 'GET':
+        jobs = Job.objects.all()
+        serializer = JobSerializer(jobs, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        data = request.data.copy()
+        data['client'] = request.user.profile.id
+        serializer = JobSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)

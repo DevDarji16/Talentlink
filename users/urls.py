@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import check_user,check_username,create_profile,get_profile,check_login
+from .views import check_user,check_username,create_profile,get_profile,check_login,gigs_view,jobs_view
 
 urlpatterns=[
 
@@ -8,5 +8,7 @@ urlpatterns=[
     path('create_profile/',create_profile),
     path('get_profile/',get_profile),
     path('check_login/',check_login),
+    path('gigs/', gigs_view),
+    path('jobs/', jobs_view),
 
 ]

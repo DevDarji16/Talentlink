@@ -13,6 +13,12 @@ class UserProfile(models.Model):
 
     description=models.TextField(blank=True,default="")
 
+    # NEW: Work Experience
+    work_experience = models.JSONField(blank=True, null=True)
+
+    # NEW: Languages
+    languages = models.JSONField(blank=True, null=True)
+
     #freelancer
     skills=models.JSONField(blank=True,null=True)
     experience=models.IntegerField(blank=True,null=True)
@@ -26,3 +32,28 @@ class UserProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return self.username
+
+class Gig(models.Model):
+    freelancer = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='gigs')
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    category = models.CharField(max_length=100)
+    tags = models.JSONField(blank=True, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    images = models.JSONField(blank=True, null=True)  # list of image URLs
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+class Job(models.Model):
+    client = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='jobs')
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    category = models.CharField(max_length=100)
+    tags = models.JSONField(blank=True, null=True)
+    budget = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
