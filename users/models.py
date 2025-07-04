@@ -14,10 +14,10 @@ class UserProfile(models.Model):
     description=models.TextField(blank=True,default="")
 
     # NEW: Work Experience
-    work_experience = models.JSONField(blank=True, null=True)
+    work_experience = models.JSONField(blank=True, null=True,help_text='these is trail2')
 
     # NEW: Languages
-    languages = models.JSONField(blank=True, null=True)
+    languages = models.JSONField(blank=True, null=True,help_text='these is trail2')
 
     #freelancer
     skills=models.JSONField(blank=True,null=True)

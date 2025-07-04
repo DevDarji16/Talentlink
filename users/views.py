@@ -73,7 +73,6 @@ def gigs_view(request):
 
 
 
-
 @api_view(['GET', 'POST'])
 def jobs_view(request):
     if request.method == 'GET':
