@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import UserProfile,Gig, Job
+from .models import UserProfile,Gig, Job,Application,FreelanceGroup
 from allauth.socialaccount.models import SocialAccount
+import uuid
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -9,6 +10,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'user': {'read_only': True}
         }
+
+    
 
 class SocialAccountSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,10 +23,32 @@ class GigSerializer(serializers.ModelSerializer):
     class Meta:
         model = Gig
         fields = '__all__'  
-        read_only_fields = ['freelancer', 'created_at']
+        extra_kwargs = {
+            'freelancer': {'read_only': True}
+        }
+        depth = 1 
 
 class JobSerializer(serializers.ModelSerializer):
+    client = UserProfileSerializer(read_only=True)
     class Meta:
         model = Job
         fields = '__all__'
         read_only_fields = ['client', 'created_at']
+
+class ApplicationSerializer(serializers.ModelSerializer):
+    freelancer = serializers.StringRelatedField(read_only=True)
+    client = serializers.StringRelatedField(read_only=True)
+    
+    class Meta:
+        model = Application
+        fields = '__all__'
+        read_only_fields = ['freelancer', 'client', 'status', 'created_at']
+
+
+class FreelanceGroupSerializer(serializers.ModelSerializer):
+    leader=UserProfileSerializer(read_only=True)
+    members=UserProfileSerializer(read_only=True,many=True)
+    class Meta:
+        model=FreelanceGroup
+        fields='__all__'
+        read_only_fields = ['leader']
