@@ -2,10 +2,10 @@ from django.shortcuts import render,redirect
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import UserProfile,Gig,Job,Application,FreelanceGroup
+from .models import UserProfile,Gig,Job,Application,FreelanceGroup,Notification,GroupInvite
 from allauth.socialaccount.models import SocialAccount
-from .serializers import UserProfileSerializer,SocialAccountSerializer,GigSerializer,JobSerializer,ApplicationSerializer,FreelanceGroupSerializer
-from rest_framework import generics
+from .serializers import UserProfileSerializer,SocialAccountSerializer,GigSerializer,JobSerializer,ApplicationSerializer,FreelanceGroupSerializer,NotificationSerializer,GroupInviteSerializer
+from rest_framework import generics,status
 # Create your views here.
 
 class FreelanceGroupDetailView(generics.RetrieveAPIView):
@@ -14,18 +14,49 @@ class FreelanceGroupDetailView(generics.RetrieveAPIView):
 
 @api_view(['GET'])
 def get_groups(request):
-    data=FreelanceGroup.objects.all()
+    data=FreelanceGroup.objects.all().order_by('-created_at')
     serializer=FreelanceGroupSerializer(data,many=True)
     return Response({'groups':serializer.data})
 
 @api_view(['POST'])
 def create_group(request):
-    serializer=FreelanceGroupSerializer(data=request.data)
+    serializer = FreelanceGroupSerializer(data=request.data)
     if serializer.is_valid():
-        group=serializer.save(leader=request.user.profile)
-        group.members.add(request.user.profile) 
-        return Response({'message':'success',"data":serializer.data})
-    return Response({'message':'group not created (create_group)!','error':serializer.errors})
+        group = serializer.save(leader=request.user.profile)
+        group.members.add(request.user.profile)
+        
+        group_data = {
+            'id': group.id,
+            'name': group.name,
+            'description': group.description,
+            'leader_id': request.user.profile.id,
+            'created_at': group.created_at.isoformat()
+        }
+        
+        profile = request.user.profile
+        if not profile.leader_of:  # Initialize if empty
+            profile.leader_of = []
+        
+        profile.leader_of.append(group_data)  # Append full group data
+        profile.save()
+        
+        return Response({
+            'message': 'success',
+            'group': group_data  # Return same format for frontend
+        })
+    
+    return Response({'error': serializer.errors}, status=400)
+
+@api_view(['GET'])
+def search_users(request):
+    query=request.GET.get('q')
+    if not query:
+        return Response({"results": []})
+    users=UserProfile.objects.filter(role='freelancer').filter(username__icontains=query) | UserProfile.objects.filter(role='freelancer').filter(fullname__icontains=query) 
+    users = users.exclude(id=request.user.profile.id)
+    serializer = UserProfileSerializer(users, many=True)
+
+    return Response({'results':serializer.data})
 
 
 @api_view(['GET'])
@@ -276,3 +307,210 @@ def apply_to_job(request, job_id):
 
 
 
+@api_view(['POST'])
+def send_group_invite(request, group_id):
+    sender_profile = UserProfile.objects.get(user=request.user)
+    receiver_id = request.data.get("receiver_id")
+
+    # 1. Get group
+    try:
+        group = FreelanceGroup.objects.get(id=group_id)
+    except FreelanceGroup.DoesNotExist:
+        return Response({"error": "Group not found"}, status=404)
+
+    # 2. Check leader
+    if group.leader != sender_profile:
+        return Response({"error": "Only leader can send invites"}, status=403)
+
+    # 3. Get receiver
+    try:
+        receiver_profile = UserProfile.objects.get(id=receiver_id)
+    except UserProfile.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+
+    # 4. Already a member?
+    if receiver_profile in group.members.all():
+        return Response({"error": "User already in group"}, status=400)
+
+    # 5. Already invited?
+    if GroupInvite.objects.filter(
+        sender=sender_profile,
+        receiver=receiver_profile,
+        group=group,
+        status="pending"
+    ).exists():
+        return Response({"error": "Invite already pending"}, status=400)
+
+    # 6. Create invite
+    invite = GroupInvite.objects.create(
+        sender=sender_profile,
+        receiver=receiver_profile,
+        group=group
+    )
+
+    # 7. Create notification
+    Notification.objects.create(
+        user=receiver_profile,
+        type="group_invite",
+        message=f"{sender_profile.username} invited you to join {group.name}",
+        related_group=group,
+        related_invite=invite
+    )
+
+    return Response({"message": "Invite sent", "invite_id": invite.id}, status=201)
+
+
+@api_view(['POST'])
+def respond_group_invite(request, invite_id):
+    action = request.data.get("action")  
+    notification_id = request.data.get("n_id")  
+    user_profile = UserProfile.objects.get(user=request.user)
+    
+    try:
+        invite = GroupInvite.objects.get(id=invite_id)
+        n_id = Notification.objects.get(id=notification_id)
+    except GroupInvite.DoesNotExist:
+        return Response({"error": "Invite not found"}, status=404)
+
+    # Only receiver can respond
+    if invite.receiver != user_profile:
+        return Response({"error": "Not your invite"}, status=403)
+
+    if action == "accept":
+        invite.group.members.add(user_profile)
+        Notification.objects.create(
+            user=invite.sender,
+            type="group_update",
+            message=f"{user_profile.username} accepted your invite to {invite.group.name}",
+            related_group=invite.group
+        )
+        invite.delete()  
+        n_id.delete()
+    elif action == "decline":
+        invite.delete() 
+        n_id.delete()
+    else:
+        return Response({"error": "Invalid action"}, status=400)
+
+    return Response({"message": f"Invite {action}ed and removed"}, status=200)
+
+
+@api_view(['PATCH'])
+def mark_notification_read(request, pk):
+    try:
+        notification = Notification.objects.get(pk=pk, user=request.user.profile)
+    except Notification.DoesNotExist:
+        return Response({"error": "Notification not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    notification.is_read = True
+    notification.save()
+    return Response({"message": "Notification marked as read"})
+
+@api_view(['GET'])
+def get_notifications(request):
+    notifications = Notification.objects.filter(user=request.user.profile).order_by('-created_at')
+    serializer = NotificationSerializer(notifications, many=True)
+    return Response(serializer.data)
+
+
+
+@api_view(['POST'])
+def create_application(request):
+    # Get required data
+    job_id = request.data.get('job_id')
+    proposal_text = request.data.get('proposal_text')
+    apply_as = request.data.get('apply_as', 'individual')  # 'individual' or 'group'
+    group_id = request.data.get('group_id')
+
+    # Validate job exists
+    try:
+        job = Job.objects.get(id=job_id)
+    except Job.DoesNotExist:
+        return Response({"error": "Job not found"}, status=404)
+
+    # Validate group (if applying as group)
+    group = None
+    if apply_as == 'group':
+        if not group_id:
+            return Response({"error": "Group ID required for group applications"}, status=400)
+        try:
+            group = FreelanceGroup.objects.get(id=group_id, leader=request.user.profile)
+        except FreelanceGroup.DoesNotExist:
+            return Response({"error": "Group not found or you're not the leader"}, status=403)
+
+    # Create application
+    application = Application.objects.create(
+        job=job,
+        freelancer=request.user.profile,
+        client=job.client,
+        proposal_text=proposal_text,
+        is_group=(apply_as == 'group'),
+        is_individual=(apply_as == 'individual'),
+        group=group
+    )
+
+    return Response({
+        "message": "Application submitted!",
+        "application_id": application.id
+    }, status=201)
+
+
+@api_view(['GET'])
+def list_job_applications(request, job_id):
+    # Check if job exists and user is the owner
+    try:
+        job = Job.objects.get(id=job_id, client=request.user.profile)
+    except Job.DoesNotExist:
+        return Response({"error": "Job not found or unauthorized"}, status=404)
+
+    # Split applications by type
+    individual_apps = job.applications.filter(is_individual=True)
+    group_apps = job.applications.filter(is_group=True)
+
+    return Response({
+        "individual": ApplicationSerializer(individual_apps, many=True).data,
+        "groups": ApplicationSerializer(group_apps, many=True).data
+    })
+
+@api_view(['POST'])
+def respond_to_application(request, application_id):
+    action = request.data.get('action')  # 'accept' or 'reject'
+    
+    try:
+        application = Application.objects.get(id=application_id, client=request.user.profile)
+    except Application.DoesNotExist:
+        return Response({"error": "Application not found"}, status=404)
+
+    if action == 'accept':
+        # Create JobStatus record (simplest version)
+        JobStatus.objects.create(
+            job=application.job,
+            client=application.client,
+            freelancer=application.freelancer,
+            group=application.group
+        )
+        message = "Application accepted!"
+    elif action == 'reject':
+        message = "Application rejected."
+    else:
+        return Response({"error": "Invalid action"}, status=400)
+
+    return Response({"message": message})
+
+@api_view(['PUT', 'DELETE'])
+def manage_gig(request, gig_id):
+    try:
+        gig = Gig.objects.get(id=gig_id, freelancer=request.user.profile)
+    except Gig.DoesNotExist:
+        return Response({"error": "Gig not found or unauthorized"}, status=404)
+
+    if request.method == 'PUT':
+        serializer = GigSerializer(gig, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    elif request.method == 'DELETE':
+        gig.delete()
+        return Response({"message": "Gig deleted successfully"}, status=204)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserProfile,Gig, Job,Application,FreelanceGroup
+from .models import UserProfile,Gig, Job,Application,FreelanceGroup,Notification,GroupInvite
 from allauth.socialaccount.models import SocialAccount
 import uuid
 
@@ -52,3 +52,24 @@ class FreelanceGroupSerializer(serializers.ModelSerializer):
         model=FreelanceGroup
         fields='__all__'
         read_only_fields = ['leader']
+
+
+class GroupInviteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GroupInvite
+        fields = ['id', 'sender', 'receiver', 'group', 'status', 'created_at']
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = [
+            'id',
+            'type',
+            'message',
+            'is_read',
+            'created_at',
+            'related_group',
+            'related_invite'
+        ]
+

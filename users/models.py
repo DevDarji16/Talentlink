@@ -16,6 +16,8 @@ class UserProfile(models.Model):
     languages = models.JSONField(blank=True, null=True)
     projects = models.JSONField(blank=True, null=True)
 
+    leader_of = models.JSONField(default=list)  
+
     skills=models.JSONField(blank=True,null=True)
     experience=models.IntegerField(blank=True,null=True)
     portfolio_link=models.URLField(blank=True,null=True)
@@ -41,6 +43,7 @@ class Gig(models.Model):
     def __str__(self):
         return self.title
 
+
 class Job(models.Model):
     client = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='jobs')
     title = models.CharField(max_length=200)
@@ -54,15 +57,28 @@ class Job(models.Model):
         return self.title
 
 
+class FreelanceGroup(models.Model):
+    name=models.CharField(max_length=100)
+    leader = models.ForeignKey(UserProfile,on_delete=models.CASCADE, related_name='led_groups')
+    description = models.TextField(blank=True)
+    skills = models.JSONField(default=list)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    members = models.ManyToManyField(UserProfile, related_name='groups', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
 class Application(models.Model):
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='applications')
     freelancer = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='applications')
     client = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='received_applications')
-    
+    group = models.ForeignKey(FreelanceGroup, on_delete=models.CASCADE, null=True, blank=True)
     proposal_text = models.TextField()
     expected_timeline = models.CharField(max_length=255)
     proposed_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    
+    is_group = models.BooleanField(default=False)
+    is_individual = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     STATUS_CHOICES = (
@@ -75,18 +91,6 @@ class Application(models.Model):
     def __str__(self):
         return f'{self.freelancer.username} → {self.job.title}'
 
-
-class FreelanceGroup(models.Model):
-    name=models.CharField(max_length=100,unique=True)
-    leader = models.ForeignKey(UserProfile,on_delete=models.CASCADE, related_name='led_groups')
-    description = models.TextField(blank=True)
-    skills = models.JSONField(default=list)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    members = models.ManyToManyField(UserProfile, related_name='groups', blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
 
 
 
@@ -123,3 +127,5 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.user.username} - {self.type}"
+
+

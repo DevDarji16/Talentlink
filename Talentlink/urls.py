@@ -21,5 +21,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('authentication.urls')),
     path('ping/', ping),
-    path('',include('users.urls'))
+    path('',include('users.urls')),
+    path('',include('excalidraw.urls')),
+    path('',include('draft.urls')),
+    path('',include('jobstatus.urls')),
+    path('',include('gigapplication.urls')),
 ]
