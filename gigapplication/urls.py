@@ -3,7 +3,8 @@ from .views import (
     apply_to_gig,
     freelancer_applications,
     client_applications,
-    respond_to_gig_application
+    respond_to_gig_application,
+    gig_application_status
 )
 
 urlpatterns = [
@@ -11,5 +12,7 @@ urlpatterns = [
     path('gigs/<int:gig_id>/apply/', apply_to_gig, name='apply-to-gig'),
     path('applications/freelancer/', freelancer_applications, name='freelancer-applications'),
     path('applications/client/', client_applications, name='client-applications'),
-    path('applications/<int:application_id>/respond/', respond_to_gig_application, name='respond-to-application'),
+    path('gigapplications/<int:application_id>/respond/', respond_to_gig_application, name='respond-to-gigapplication'),
+    path('gigs/<int:gig_id>/application-status/', gig_application_status, name='gig-application-status'),
+
 ]

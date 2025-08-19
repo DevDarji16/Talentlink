@@ -6,6 +6,8 @@ from .models import UserProfile,Gig,Job,Application,FreelanceGroup,Notification,
 from allauth.socialaccount.models import SocialAccount
 from .serializers import UserProfileSerializer,SocialAccountSerializer,GigSerializer,JobSerializer,ApplicationSerializer,FreelanceGroupSerializer,NotificationSerializer,GroupInviteSerializer
 from rest_framework import generics,status
+from wallet.models import WalletTransaction
+from jobstatus.models import JobStatus
 # Create your views here.
 
 class FreelanceGroupDetailView(generics.RetrieveAPIView):
@@ -23,7 +25,7 @@ def create_group(request):
     serializer = FreelanceGroupSerializer(data=request.data)
     if serializer.is_valid():
         group = serializer.save(leader=request.user.profile)
-        group.members.add(request.user.profile)
+        # group.members.add(request.user.profile)
         
         group_data = {
             'id': group.id,
@@ -188,7 +190,7 @@ def delete_project(request):
 @api_view(['GET', 'POST'])
 def gigs_view(request):
     if request.method == 'GET':
-        gigs = Gig.objects.all()
+        gigs = Gig.objects.filter(is_active=True).order_by('-created_at')
         serializer = GigSerializer(gigs, many=True)
         return Response(serializer.data)
 
@@ -206,7 +208,7 @@ def gigs_view(request):
 @api_view(['GET', 'POST'])
 def jobs_view(request):
     if request.method == 'GET':
-        jobs = Job.objects.all()
+        jobs = Job.objects.filter(status="pending").order_by('-created_at')
         serializer = JobSerializer(jobs, many=True)
         return Response(serializer.data)
 
@@ -279,32 +281,6 @@ def get_job_by_id(request,id):
 
 
         
-@api_view(['POST'])
-def apply_to_job(request, job_id):
-    user_profile = UserProfile.objects.get(user=request.user)
-    if user_profile.role not in ['freelancer', 'both']:
-        return Response({"detail": "Only freelancers can apply."}, status=403)
-    
-    try:
-        job = Job.objects.get(id=job_id)
-    except Job.DoesNotExist:
-        return Response({"detail": "Job not found."}, status=404)
-
-    if Application.objects.filter(job=job, freelancer=user_profile).exists():
-        return Response({"detail": "You have already applied."}, status=400)
-
-    data = request.data.copy()
-    data['freelancer'] = user_profile.id
-    data['client'] = job.client.id
-    data['job'] = job.id
-
-    serializer = ApplicationSerializer(data=data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=201)
-    
-    return Response(serializer.errors, status=400)
-
 
 
 @api_view(['POST'])
@@ -475,42 +451,96 @@ def list_job_applications(request, job_id):
 @api_view(['POST'])
 def respond_to_application(request, application_id):
     action = request.data.get('action')  # 'accept' or 'reject'
-    
+
     try:
         application = Application.objects.get(id=application_id, client=request.user.profile)
     except Application.DoesNotExist:
         return Response({"error": "Application not found"}, status=404)
 
     if action == 'accept':
-        # Create JobStatus record (simplest version)
-        JobStatus.objects.create(
-            job=application.job,
-            client=application.client,
-            freelancer=application.freelancer,
-            group=application.group
+        client = request.user.profile
+
+        # ✅ Check wallet balance
+        if client.wallet_balance < application.proposed_price:
+            return Response(
+                {"error": "Insufficient balance in wallet"},
+                status=400
+            )
+
+        # ✅ Deduct money from wallet
+        client.wallet_balance -= application.proposed_price
+        client.save()
+
+        # ✅ Record wallet transaction
+        WalletTransaction.objects.create(
+            user=client,
+            tx_type="debit",
+            amount=application.proposed_price,
+            balance_after=client.wallet_balance,
+            reference=f"Payment for application #{application.id}"
         )
-        message = "Application accepted!"
-    elif action == 'reject':
-        message = "Application rejected."
+
+        # ✅ Create JobStatus entry
+        JobStatus.objects.create(
+            job=application,
+            client=application.job.client,
+            freelancer=application.freelancer,
+            group=application.group,
+            status='ongoing',
+            price=application.proposed_price,  # store the money value
+            is_job=True  # distinguish from draft flow
+        )
+
+        application.status = 'hired'
+        application.job.status = "hired"  # update Job too
+        application.job.save()
+        application.save()
+
+        message = "Application accepted! Project started and payment deducted."
     else:
-        return Response({"error": "Invalid action"}, status=400)
+        message = "Application rejected."
+        application.status = "rejected"
+        application.save()
 
     return Response({"message": message})
 
-@api_view(['PUT', 'DELETE'])
-def manage_gig(request, gig_id):
+
+
+@api_view(['POST'])
+def disable_gig(request, gig_id):
     try:
         gig = Gig.objects.get(id=gig_id, freelancer=request.user.profile)
     except Gig.DoesNotExist:
-        return Response({"error": "Gig not found or unauthorized"}, status=404)
+        return Response({"error": "Gig not found"}, status=404)
 
-    if request.method == 'PUT':
-        serializer = GigSerializer(gig, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=400)
+    gig.is_active = False
+    gig.save()
+    return Response({"message": "Gig disabled successfully"})
 
-    elif request.method == 'DELETE':
-        gig.delete()
-        return Response({"message": "Gig deleted successfully"}, status=204)
+
+@api_view(['POST'])
+def enable_gig(request, gig_id):
+    try:
+        gig = Gig.objects.get(id=gig_id, freelancer=request.user.profile)
+    except Gig.DoesNotExist:
+        return Response({"error": "Gig not found"}, status=404)
+
+    gig.is_active = True
+    gig.save()
+    return Response({"message": "Gig Enabled successfully"})
+
+@api_view(['POST'])
+def edit_gig(request, gig_id):
+    try:
+        gig = Gig.objects.get(id=gig_id, freelancer=request.user.profile)
+    except Gig.DoesNotExist:
+        return Response({"error": "Gig not found"}, status=404)
+
+    gig.title = request.data.get("title", gig.title)
+    gig.description = request.data.get("description", gig.description)
+    gig.price = request.data.get("price", gig.price)
+    gig.save()
+
+    return Response({"message": "Gig updated", "gig": GigSerializer(gig).data})
+
+    

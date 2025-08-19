@@ -69,7 +69,11 @@ INSTALLED_APPS = [
     'excalidraw',
     'draft',
     'jobstatus',
-    'gigapplication'
+    'gigapplication',
+    'wallet',
+    'jobapplication',
+    'reviews',
+    'messaging',
 ]
 
 MIDDLEWARE = [

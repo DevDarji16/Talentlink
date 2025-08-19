@@ -36,14 +36,19 @@ class JobSerializer(serializers.ModelSerializer):
         read_only_fields = ['client', 'created_at']
 
 class ApplicationSerializer(serializers.ModelSerializer):
-    freelancer = serializers.StringRelatedField(read_only=True)
-    client = serializers.StringRelatedField(read_only=True)
-    
     class Meta:
         model = Application
         fields = '__all__'
         read_only_fields = ['freelancer', 'client', 'status', 'created_at']
 
+class ApplicationDetailSerializer(serializers.ModelSerializer):
+    freelancer = UserProfileSerializer()
+    client = UserProfileSerializer()
+    job = JobSerializer()
+
+    class Meta:
+        model = Application
+        fields = '__all__'
 
 class FreelanceGroupSerializer(serializers.ModelSerializer):
     leader=UserProfileSerializer(read_only=True)

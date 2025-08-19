@@ -23,7 +23,11 @@ urlpatterns = [
     path('ping/', ping),
     path('',include('users.urls')),
     path('',include('excalidraw.urls')),
-    path('',include('draft.urls')),
+    path('drafts/',include('draft.urls')),
     path('',include('jobstatus.urls')),
     path('',include('gigapplication.urls')),
+    path("wallet/", include("wallet.urls")),
+    path("jobapplication/", include("jobapplication.urls")),
+    path("", include("reviews.urls")),
+    path("", include("messaging.urls")),
 ]
