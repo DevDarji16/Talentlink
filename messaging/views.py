@@ -10,7 +10,7 @@ from .serializers import ConversationSerializer, MessageSerializer
 @api_view(['GET'])
 def list_conversations(request):
     current_user = request.user.profile
-    convs = Conversation.objects.filter(participants=current_user).order_by('-created_at')
+    convs = Conversation.objects.filter(participants=current_user).order_by('-updated_at')
     serializer = ConversationSerializer(convs, many=True)
     return Response(serializer.data)
 
@@ -32,6 +32,7 @@ def get_or_create_conversation(request, user_id):
     return Response(serializer.data)
 
 
+# messaging/views.py
 @api_view(['POST'])
 def send_message(request):
     current_user = request.user.profile
@@ -51,6 +52,11 @@ def send_message(request):
         return Response({"error": "You are not part of this conversation"}, status=status.HTTP_403_FORBIDDEN)
 
     msg = Message.objects.create(conversation=conv, sender=current_user, text=text)
+
+    # 🔥 Update conversation preview
+    conv.last_message = text
+    conv.save(update_fields=['last_message', 'updated_at'])
+
     serializer = MessageSerializer(msg)
     return Response(serializer.data)
 
@@ -63,10 +69,18 @@ def get_messages(request, conversation_id):
     except Conversation.DoesNotExist:
         return Response({"error": "Conversation not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    # Ensure user is part of conversation
     if current_user not in conv.participants.all():
         return Response({"error": "You are not part of this conversation"}, status=status.HTTP_403_FORBIDDEN)
 
     messages = conv.messages.order_by('created_at')
+
+    # 🔹 mark unread messages as read
+    unread = messages.exclude(read_by=current_user)
+    for msg in unread:
+        msg.read_by.add(current_user)
+        if conv.participants.count() == 2:  # 1-1 chat
+            msg.is_read = True
+            msg.save(update_fields=['is_read'])
+
     serializer = MessageSerializer(messages, many=True)
     return Response(serializer.data)

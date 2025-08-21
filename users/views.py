@@ -8,6 +8,7 @@ from .serializers import UserProfileSerializer,SocialAccountSerializer,GigSerial
 from rest_framework import generics,status
 from wallet.models import WalletTransaction
 from jobstatus.models import JobStatus
+from messaging.models import Conversation
 # Create your views here.
 
 class FreelanceGroupDetailView(generics.RetrieveAPIView):
@@ -25,7 +26,18 @@ def create_group(request):
     serializer = FreelanceGroupSerializer(data=request.data)
     if serializer.is_valid():
         group = serializer.save(leader=request.user.profile)
-        # group.members.add(request.user.profile)
+        
+        # Add the leader to members by default
+        group.members.add(request.user.profile)
+        
+        # 1️⃣ Create a Conversation for this group
+        conv = Conversation.objects.create(
+            name=group.name,
+            is_group=True
+        )
+        # Add all current members (leader only for now)
+        conv.participants.set(group.members.all())
+        conv.save()
         
         group_data = {
             'id': group.id,
@@ -38,13 +50,12 @@ def create_group(request):
         profile = request.user.profile
         if not profile.leader_of:  # Initialize if empty
             profile.leader_of = []
-        
-        profile.leader_of.append(group_data)  # Append full group data
+        profile.leader_of.append(group_data)
         profile.save()
         
         return Response({
             'message': 'success',
-            'group': group_data  # Return same format for frontend
+            'group': group_data
         })
     
     return Response({'error': serializer.errors}, status=400)
@@ -354,6 +365,11 @@ def respond_group_invite(request, invite_id):
 
     if action == "accept":
         invite.group.members.add(user_profile)
+        try:
+            conv = Conversation.objects.get(name=invite.group.name, is_group=True)
+            conv.participants.add(user_profile)
+        except Conversation.DoesNotExist:
+            pass  # optionally log warning
         Notification.objects.create(
             user=invite.sender,
             type="group_update",

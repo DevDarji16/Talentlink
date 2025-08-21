@@ -31,7 +31,7 @@ def completed_freelancer_jobs(request):
     jobs = JobStatus.objects.filter(
         status='completed',
         freelancer=request.user.profile
-    )
+    ).order_by('-created_at')
     return Response(JobStatusSerializer(jobs, many=True).data)
 
 @api_view(['GET'])
@@ -39,7 +39,7 @@ def completed_client_jobs(request):
     jobs = JobStatus.objects.filter(
         status='completed',
         client=request.user.profile
-    )
+    ).order_by('-created_at')
     return Response(JobStatusSerializer(jobs, many=True).data)
 
 @api_view(['POST'])

@@ -49,7 +49,16 @@ CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']  # Expose custom headers
 
 
 
+
 # Application definition
+ASGI_APPLICATION = "talentlink.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [("localhost", 6379)]},  # or "redis" if using docker-compose
+    },
+}
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -73,6 +82,7 @@ INSTALLED_APPS = [
     'wallet',
     'jobapplication',
     'reviews',
+    'channels',
     'messaging',
 ]
 
