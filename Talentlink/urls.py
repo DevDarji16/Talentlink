@@ -30,4 +30,5 @@ urlpatterns = [
     path("jobapplication/", include("jobapplication.urls")),
     path("", include("reviews.urls")),
     path("", include("messaging.urls")),
+    path("talentlink", include("talentlinkreviews.urls")),
 ]

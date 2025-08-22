@@ -9,6 +9,7 @@ from rest_framework import generics,status
 from wallet.models import WalletTransaction
 from jobstatus.models import JobStatus
 from messaging.models import Conversation
+from django.shortcuts import get_object_or_404
 # Create your views here.
 
 class FreelanceGroupDetailView(generics.RetrieveAPIView):
@@ -27,15 +28,12 @@ def create_group(request):
     if serializer.is_valid():
         group = serializer.save(leader=request.user.profile)
         
-        # Add the leader to members by default
         group.members.add(request.user.profile)
         
-        # 1️⃣ Create a Conversation for this group
         conv = Conversation.objects.create(
             name=group.name,
             is_group=True
         )
-        # Add all current members (leader only for now)
         conv.participants.set(group.members.all())
         conv.save()
         
@@ -299,27 +297,22 @@ def send_group_invite(request, group_id):
     sender_profile = UserProfile.objects.get(user=request.user)
     receiver_id = request.data.get("receiver_id")
 
-    # 1. Get group
     try:
         group = FreelanceGroup.objects.get(id=group_id)
     except FreelanceGroup.DoesNotExist:
         return Response({"error": "Group not found"}, status=404)
 
-    # 2. Check leader
     if group.leader != sender_profile:
         return Response({"error": "Only leader can send invites"}, status=403)
 
-    # 3. Get receiver
     try:
         receiver_profile = UserProfile.objects.get(id=receiver_id)
     except UserProfile.DoesNotExist:
         return Response({"error": "User not found"}, status=404)
 
-    # 4. Already a member?
     if receiver_profile in group.members.all():
         return Response({"error": "User already in group"}, status=400)
 
-    # 5. Already invited?
     if GroupInvite.objects.filter(
         sender=sender_profile,
         receiver=receiver_profile,
@@ -328,14 +321,12 @@ def send_group_invite(request, group_id):
     ).exists():
         return Response({"error": "Invite already pending"}, status=400)
 
-    # 6. Create invite
     invite = GroupInvite.objects.create(
         sender=sender_profile,
         receiver=receiver_profile,
         group=group
     )
 
-    # 7. Create notification
     Notification.objects.create(
         user=receiver_profile,
         type="group_invite",
@@ -386,6 +377,49 @@ def respond_group_invite(request, invite_id):
 
     return Response({"message": f"Invite {action}ed and removed"}, status=200)
 
+
+@api_view(['POST'])
+def remove_member_from_group(request, group_id):
+    leader_profile = request.user.profile
+    member_id = request.data.get("member_id")
+
+    if not member_id:
+        return Response({"detail": "member_id is required"}, status=400)
+
+    group = get_object_or_404(FreelanceGroup, id=group_id)
+    if group.leader != leader_profile:
+        return Response({"detail": "Only group leader can remove members"}, status=403)
+
+    member = get_object_or_404(UserProfile, id=member_id)
+
+    if member == group.leader:
+        return Response({"detail": "Leader cannot be removed"}, status=400)
+
+    if member.id not in group.members.values_list('id', flat=True):
+        return Response({"detail": "User is not a member of this group"}, status=400)
+
+    # Remove from group
+    group.members.remove(member)
+
+    # Remove from group conversations
+    conversations = Conversation.objects.filter(is_group=True, participants=member)
+    conversations = [c for c in conversations if c.name == group.name]  # optional
+    for convo in conversations:
+        convo.participants.remove(member)
+
+    return Response({"detail": f"{member.fullname} has been removed from the group"}, status=200)
+
+@api_view(['PATCH'])
+def update_group_details(request, group_id):
+    group = get_object_or_404(FreelanceGroup, id=group_id)
+    if group.leader != request.user.profile:
+        return Response({"detail": "Only leader can update."}, status=status.HTTP_403_FORBIDDEN)
+
+    for field in ["name", "description",'price' ,"skills"]:
+        if field in request.data:
+            setattr(group, field, request.data[field])
+    group.save()
+    return Response({"detail": "Group updated successfully."})
 
 @api_view(['PATCH'])
 def mark_notification_read(request, pk):

@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     'reviews',
     'channels',
     'messaging',
+    'talentlinkreviews'
 ]
 
 MIDDLEWARE = [

@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import check_user,check_username,create_profile,get_profile,check_login,gigs_view,jobs_view,update_profile,add_project,get_all_freelancers,get_freelancer_by_username,edit_project,delete_project,get_gig_by_id,get_job_by_id,get_person_by_username,FreelanceGroupDetailView,create_group,my_groups,joined_groups,get_groups,search_users,send_group_invite,respond_group_invite,mark_notification_read,get_notifications,create_application,respond_to_application,list_job_applications
-from .views import disable_gig,edit_gig,enable_gig
+from .views import disable_gig,edit_gig,enable_gig,remove_member_from_group,update_group_details
 urlpatterns=[
 
     path('check_user/',check_user),
@@ -32,6 +32,8 @@ urlpatterns=[
     path('group/my_groups/',my_groups,name='my_groups'),
     path('group/joined_groups/',joined_groups,name='joined_groups'),
     path('groups/',get_groups,name='get_groups'),
+    path('group/<int:group_id>/remove_member/', remove_member_from_group, name='remove_member'),
+    path('group/<int:group_id>/update/', update_group_details, name='update_group'),
 
     path('search/',search_users,name='search_users'),
 
