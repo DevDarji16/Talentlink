@@ -31,6 +31,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'talentlink-nloa.onrender.com',
+    "https://talentlink-beige.vercel.app",
     'localhost',
     '127.0.0.1'
 ]
@@ -38,10 +39,12 @@ ALLOWED_HOSTS = [
 # CORS_ALLOW_ALL_ORIGINS = True 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
+    "https://talentlink-beige.vercel.app",
 ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "https://talentlink-beige.vercel.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True  # Required for sessions/cookies
@@ -88,8 +91,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -208,5 +211,8 @@ SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True   
 
 
-LOGIN_REDIRECT_URL = 'http://localhost:5173/onboarding'
-LOGOUT_REDIRECT_URL = 'http://localhost:5173/'
+# LOGIN_REDIRECT_URL = 'http://localhost:5173/onboarding'
+# LOGOUT_REDIRECT_URL = 'http://localhost:5173/'
+
+LOGIN_REDIRECT_URL = 'https://talentlink-beige.vercel.app/onboarding'
+LOGOUT_REDIRECT_URL = 'https://talentlink-beige.vercel.app/'
