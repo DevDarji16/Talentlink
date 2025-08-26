@@ -31,7 +31,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'talentlink-nloa.onrender.com',
-    "https://talentlink-beige.vercel.app",
+    "talentlink-beige.vercel.app",
     'localhost',
     '127.0.0.1'
 ]
@@ -100,7 +100,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
 ]
 
 ROOT_URLCONF = 'Talentlink.urls'
