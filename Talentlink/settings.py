@@ -40,6 +40,7 @@ ALLOWED_HOSTS = [
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "https://talentlink-beige.vercel.app",
+    "https://talentlink-nloa.onrender.com",
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -208,6 +209,8 @@ ACCOUNT_LOGOUT_ON_GET=True
 
 SESSION_COOKIE_SAMESITE = 'None'  
 SESSION_COOKIE_SECURE = True   
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True
 
 
 # LOGIN_REDIRECT_URL = 'http://localhost:5173/onboarding'
