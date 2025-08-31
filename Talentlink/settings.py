@@ -46,12 +46,23 @@ CSRF_TRUSTED_ORIGINS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://talentlink-beige.vercel.app",
+    "https://talentlink-nloa.onrender.com",
 ]
 
 CORS_ALLOW_CREDENTIALS = True  # Required for sessions/cookies
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']  # Expose custom headers
 
+SOCIALACCOUNT_LOGIN_ON_GET=True
+ACCOUNT_LOGOUT_ON_GET=True
 
+SESSION_COOKIE_SAMESITE = 'None'  
+SESSION_COOKIE_SECURE = True   
+SESSION_COOKIE_HTTPONLY = True
+
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_DOMAIN = '.onrender.com'
 
 
 # Application definition
@@ -204,13 +215,6 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-SOCIALACCOUNT_LOGIN_ON_GET=True
-ACCOUNT_LOGOUT_ON_GET=True
-
-SESSION_COOKIE_SAMESITE = 'None'  
-SESSION_COOKIE_SECURE = True   
-CSRF_COOKIE_SAMESITE = 'None'
-CSRF_COOKIE_SECURE = True
 
 
 # LOGIN_REDIRECT_URL = 'http://localhost:5173/onboarding'
