@@ -16,9 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-from .views import ping
+from .views import ping,get_csrf
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("csrf/", get_csrf, name="csrf"),
     path('auth/', include('authentication.urls')),
     path('ping/', ping),
     path('',include('users.urls')),
