@@ -1,6 +1,7 @@
 from django.shortcuts import render,redirect
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .models import UserProfile,Gig,Job,Application,FreelanceGroup,Notification,GroupInvite
 from allauth.socialaccount.models import SocialAccount
@@ -90,6 +91,7 @@ def check_user(request):
 
 @csrf_exempt
 @api_view(["POST"])
+@permission_classes([AllowAny])
 def check_username(request):
     username=request.data.get('username')
     exist=UserProfile.objects.filter(username=username).exists()
