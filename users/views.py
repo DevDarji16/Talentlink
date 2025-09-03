@@ -90,6 +90,7 @@ def check_user(request):
     return Response({'exists':exists})
 
 @api_view(["POST"])
+@csrf_exempt
 def check_username(request):
     username=request.data.get('username')
     exist=UserProfile.objects.filter(username=username).exists()
