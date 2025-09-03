@@ -62,7 +62,7 @@ SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_DOMAIN = '.onrender.com'
+# CSRF_COOKIE_DOMAIN = '.onrender.com'
 
 
 # Application definition
