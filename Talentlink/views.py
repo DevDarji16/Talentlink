@@ -6,4 +6,4 @@ def ping(request):
 
 @ensure_csrf_cookie
 def get_csrf(request):
-    return JsonResponse({"detail": "CSRF cookie set"})
+    return JsonResponse({"csrfToken": get_token(request)})
