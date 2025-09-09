@@ -57,7 +57,8 @@ ASGI_APPLICATION = "talentlink.asgi.application"
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": [("localhost", 6379)]},  # or "redis" if using docker-compose
+        # "CONFIG": {"hosts": [("localhost", 6379)]},  # or "redis" if using docker-compose
+        "CONFIG": {"hosts": [os.getenv("REDIS_URL")]},  # or "redis" if using docker-compose
     },
 }
 

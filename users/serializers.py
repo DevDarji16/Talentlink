@@ -11,8 +11,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'user': {'read_only': True}
         }
 
-    
 
+    
 class SocialAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model=SocialAccount
