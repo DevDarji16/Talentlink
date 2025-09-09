@@ -209,3 +209,5 @@ SOCIALACCOUNT_PROVIDERS = {
 
 LOGIN_REDIRECT_URL = 'https://talentlink-beige.vercel.app/onboarding'
 LOGOUT_REDIRECT_URL = 'https://talentlink-beige.vercel.app/'
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
